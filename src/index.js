@@ -1,7 +1,6 @@
 import './styles.scss';
 import 'bootstrap';
+import './view/formView.js';
+import axios from 'axios';
 
-console.log('Hello, world');
-const x = document.createElement('p');
-x.textContent = '123321';
-document.body.after(x);
+axios.get('https://lorem-rss.hexlet.app/feed').then((r) => console.log(r));

@@ -15,6 +15,10 @@ const config = {
     path: path.resolve(__dirname, 'dist'),
     filename: 'index_bundle.js',
   },
+  devServer: {
+    open: true,
+    host: 'localhost',
+  },
   plugins: [
     // Add your plugins here
     // Learn more about plugins from https://webpack.js.org/configuration/plugins/
@@ -28,7 +32,14 @@ const config = {
       },
       {
         test: /\.s[ac]ss$/i,
-        use: [stylesHandler, 'css-loader', 'postcss-loader', 'sass-loader'],
+        use: [stylesHandler, 'css-loader', 'postcss-loader', {
+          loader: 'sass-loader',
+          options: {
+            sassOptions: {
+              quietDeps: true,
+            },
+          },
+        }],
       },
       {
         test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,
