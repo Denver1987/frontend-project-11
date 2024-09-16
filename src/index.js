@@ -1,6 +1,11 @@
 import './styles.scss';
 import 'bootstrap';
-import './view/formView.js';
-import axios from 'axios';
+import './view/addView.js';
+import getRss from './service/service.js';
+import { appModel } from './model/appModel.js';
 
-axios.get('https://lorem-rss.hexlet.app/feed').then((r) => console.log(r));
+getRss('https://lorem-rss.hexlet.app/feed').then((rss) => {
+  appModel.addItems(rss);
+  appModel.addFeed(rss);
+  console.log(appModel);
+});
