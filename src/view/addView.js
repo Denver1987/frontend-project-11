@@ -3,7 +3,6 @@ import onSubmitHandler from '../controller/appController.js';
 export const urlForm = document.querySelector('.rss-form');
 const urlInput = urlForm.querySelector('#url-input');
 
-
 export default function renderValidity(bool) {
   if (bool) {
     urlInput.classList.remove('is-invalid');

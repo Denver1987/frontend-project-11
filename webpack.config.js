@@ -12,7 +12,7 @@ const stylesHandler = isProduction ? MiniCssExtractPlugin.loader : 'style-loader
 const config = {
   entry: './src/index.js',
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, 'public'),
     filename: 'index_bundle.js',
   },
   devServer: {
@@ -54,6 +54,7 @@ const config = {
 module.exports = () => {
   if (isProduction) {
     config.mode = 'production';
+    // @ts-ignore
     config.plugins.push(new MiniCssExtractPlugin());
   } else {
     config.mode = 'development';
