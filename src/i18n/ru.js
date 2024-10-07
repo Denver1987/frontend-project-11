@@ -1,3 +1,6 @@
+/* eslint-disable comma-dangle */
+/* eslint-disable quotes */
+/* eslint-disable quote-props */
 export default {
   translation: {
     "errors": {
@@ -9,6 +12,6 @@ export default {
     },
     "logo": "RSS агрегатор",
     "success": "RSS успешно загружен",
-    "onReading": "Просмотр",
+    "onReading": "Просмотр"
   },
 };
