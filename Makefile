@@ -8,7 +8,7 @@ build:
 	NODE_ENV=production npx webpack
 
 remove-build:
-	rm -rf dist
+	rm -rf public
 
 test:
 	npm test
