@@ -12,6 +12,6 @@ export default {
     },
     "logo": "RSS агрегатор",
     "success": "RSS успешно загружен",
-    "onReading": "Просмотр"
+    "seeMore": "Просмотр"
   },
 };

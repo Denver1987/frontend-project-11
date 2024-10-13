@@ -1,7 +1,9 @@
-import { v6 } from 'uuid';
+import { v6 as getUUID } from 'uuid';
 import axios from 'axios';
+import i18next from 'i18next';
+import ru from '../i18n/ru.js';
 
-export default {
+export const app = {
   urls: [],
   feeds: [],
   items: [],
@@ -20,13 +22,14 @@ export default {
       .then((rss) => {
         this.addItems(rss);
         this.addFeed(rss);
+        document.dispatchEvent(new CustomEvent('newRSSReceived', { detail: { feeds: this.feeds, items: this.items } }));
       });
   },
   getFeed(rssMarkup) {
     const feedDesctiption = rssMarkup.querySelector('description').textContent;
     const feedTitle = rssMarkup.querySelector('title').textContent;
     return {
-      feedId: v6(),
+      feedId: getUUID(),
       description: feedDesctiption,
       title: feedTitle,
     };
@@ -44,7 +47,7 @@ export default {
     const itemTitle = itemMarkup.querySelector('title').textContent;
     const itemDescription = itemMarkup.querySelector('description').textContent;
     return {
-      itemId: v6(),
+      itemId: getUUID(),
       link: itemLink,
       title: itemTitle,
       text: itemDescription,
@@ -63,3 +66,20 @@ export default {
     return false;
   },
 };
+
+export default function initApp() {
+  i18next.init({
+    lng: 'ru',
+    resources: {
+      ru,
+    },
+  })
+    .then(
+      () => {
+        console.log('Initializing success');
+      },
+      (error) => {
+        console.error('Initializing error:', error);
+      },
+    );
+}
