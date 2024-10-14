@@ -16,7 +16,7 @@ export const app = {
   },
   getRss(url) {
     const parser = new DOMParser();
-    return axios.get(`https://allorigins.hexlet.app/get?url=${encodeURIComponent(url)}`)
+    return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`)
       .then((response) => response.data.contents)
       .then((contents) => parser.parseFromString(contents, 'application/xml'))
       .then((rss) => {
