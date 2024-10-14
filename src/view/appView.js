@@ -29,6 +29,12 @@ function renderDoubles() {
   feedbackField.textContent = i18next.t('errors.rssExists');
 }
 
+function renderSuccess() {
+  feedbackField.classList.remove('text-warning', 'text-danger');
+  feedbackField.classList.add('text-success');
+  feedbackField.textContent = i18next.t('success');
+}
+
 function createPostsField() {
   return `<div class="card border-0">
     <div class="card-body"><h2 class="card-title h4">Посты</h2></div>
@@ -39,8 +45,8 @@ function createPostsField() {
 
 function renderPost(item) {
   return `<li class="list-group-item d-flex justify-content-between align-items-start border-0 border-end-0">
-        <a href="${item.link}" class="fw-bold" data-id="54" target="_blank" rel="noopener noreferrer">${item.title}</a>
-        <button type="button" class="btn btn-outline-primary btn-sm" data-id="54" data-bs-toggle="modal" data-bs-target="#modal">${i18next.t('seeMore')}</button>
+        <a href="${item.link}" class="fw-bold" data-id="${item.itemId}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+        <button type="button" class="btn btn-outline-primary btn-sm" data-id="${item.itemId}" data-bs-toggle="modal" data-bs-target="#modal">${i18next.t('seeMore')}</button>
       </li>`;
 }
 
@@ -86,4 +92,5 @@ document.addEventListener('enteredDouble', renderDoubles);
 
 document.addEventListener('newRSSReceived', (/** @type CustomEvent */event) => {
   renderRSS(event.detail.feeds, event.detail.items);
+  renderSuccess();
 });

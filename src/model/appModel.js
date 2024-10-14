@@ -4,9 +4,9 @@ import i18next from 'i18next';
 import ru from '../i18n/ru.js';
 
 export const app = {
-  urls: [],
   feeds: [],
   items: [],
+  viewedLinks: [],
   form: {
     isValid: true,
     setValidity(bool) {
@@ -20,46 +20,53 @@ export const app = {
       .then((response) => response.data.contents)
       .then((contents) => parser.parseFromString(contents, 'application/xml'))
       .then((rss) => {
-        this.addItems(rss);
-        this.addFeed(rss);
+        console.log(rss);
+        const feedId = this.addFeed(rss, url);
+        this.addItems(rss, feedId);
         document.dispatchEvent(new CustomEvent('newRSSReceived', { detail: { feeds: this.feeds, items: this.items } }));
       });
   },
-  getFeed(rssMarkup) {
+  getFeed(rssMarkup, url) {
     const feedDesctiption = rssMarkup.querySelector('description').textContent;
     const feedTitle = rssMarkup.querySelector('title').textContent;
     return {
       feedId: getUUID(),
       description: feedDesctiption,
       title: feedTitle,
+      url,
     };
   },
-  addFeed(rssMarkup) {
-    this.feeds.unshift(this.getFeed(rssMarkup));
+  addFeed(rssMarkup, url) {
+    const feed = this.getFeed(rssMarkup, url);
+    this.feeds.unshift(feed);
     console.log(this.feeds);
+    return feed.feedId;
   },
   getItems(rssMarkup) {
     const items = rssMarkup.querySelectorAll('item');
     return items;
   },
-  createItemData(itemMarkup) {
+  createItemData(itemMarkup, feedId) {
     const itemLink = itemMarkup.querySelector('link').textContent;
     const itemTitle = itemMarkup.querySelector('title').textContent;
     const itemDescription = itemMarkup.querySelector('description').textContent;
     return {
       itemId: getUUID(),
+      feedId,
       link: itemLink,
       title: itemTitle,
       text: itemDescription,
     };
   },
-  addItems(rssMarkup) {
+  addItems(rssMarkup, feedId) {
     const items = this.getItems(rssMarkup);
-    items.forEach((item) => this.items.unshift(this.createItemData(item)));
+    items.forEach((item) => this.items.unshift(this.createItemData(item, feedId)));
     console.log(this.items);
   },
+
   checkDoubles(newUrl) {
-    if (this.urls.includes(newUrl)) {
+    const urls = this.feeds.map((feed) => feed.url);
+    if (urls.includes(newUrl)) {
       document.dispatchEvent(new CustomEvent('enteredDouble'));
       return true;
     }
