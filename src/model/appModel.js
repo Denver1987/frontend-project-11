@@ -35,7 +35,7 @@ export const app = {
     };
   },
   addFeed(rssMarkup) {
-    this.feeds.push(this.getFeed(rssMarkup));
+    this.feeds.unshift(this.getFeed(rssMarkup));
     console.log(this.feeds);
   },
   getItems(rssMarkup) {
@@ -55,7 +55,7 @@ export const app = {
   },
   addItems(rssMarkup) {
     const items = this.getItems(rssMarkup);
-    items.forEach((item) => this.items.push(this.createItemData(item)));
+    items.forEach((item) => this.items.unshift(this.createItemData(item)));
     console.log(this.items);
   },
   checkDoubles(newUrl) {

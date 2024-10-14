@@ -62,13 +62,17 @@ function createFeedsField() {
 }
 
 function renderRSS(feeds, items) {
+  postsField.innerHTML = '';
+  feedsField.innerHTML = '';
   postsField.insertAdjacentHTML('beforeend', createPostsField());
   feedsField.insertAdjacentHTML('beforeend', createFeedsField());
   const postList = postsField.querySelector('ul');
+  // eslint-disable-next-line array-callback-return
   items.map((item) => {
     postList.insertAdjacentHTML('beforeend', renderPost(item));
   });
   const feedList = feedsField.querySelector('ul');
+  // eslint-disable-next-line array-callback-return
   feeds.map((feed) => {
     feedList.insertAdjacentHTML('beforeend', renderFeed(feed));
   });
