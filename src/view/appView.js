@@ -2,6 +2,7 @@ import i18next from 'i18next';
 import onSubmitHandler from '../controller/appController.js';
 
 const urlForm = document.querySelector('.rss-form');
+/** @type HTMLInputElement */
 const urlInput = urlForm.querySelector('#url-input');
 const feedbackField = document.querySelector('.feedback');
 const postsField = document.querySelector('.posts');
@@ -91,6 +92,7 @@ document.addEventListener('validitySetting', (/** @type CustomEvent */event) => 
 document.addEventListener('enteredDouble', renderDoubles);
 
 document.addEventListener('newRSSReceived', (/** @type CustomEvent */event) => {
+  urlInput.value = '';
   renderRSS(event.detail.feeds, event.detail.items);
   renderSuccess();
 });
