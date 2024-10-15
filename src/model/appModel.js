@@ -1,12 +1,14 @@
 import { v6 as getUUID } from 'uuid';
 import axios from 'axios';
 import i18next from 'i18next';
+import * as yup from 'yup';
 import ru from '../i18n/ru.js';
 
 export const app = {
   feeds: [],
   items: [],
   viewedLinks: [],
+  validationScheme: yup.string().url(),
   form: {
     isValid: true,
     setValidity(bool) {
@@ -14,6 +16,11 @@ export const app = {
       document.dispatchEvent(new CustomEvent('validitySetting', { detail: { isValid: this.isValid } }));
     },
   },
+
+  validate(url) {
+    return this.validationScheme.validate(url);
+  },
+
   getRss(url) {
     const parser = new DOMParser();
     return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`)
