@@ -25,10 +25,7 @@ export const app = {
     const parser = new DOMParser();
     return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`)
       .then(
-        (response) => {
-          console.log(response.data.status.content_type);
-          return response.data.contents;
-        },
+        (response) => response.data.contents,
         (err) => {
           if (err.message === 'Network Error') document.dispatchEvent(new CustomEvent('networkError'));
         },
@@ -36,7 +33,6 @@ export const app = {
       .then((contents) => parser.parseFromString(contents, 'application/xml'))
       .then(
         (rss) => {
-          console.log(rss, rss.querySelector('parsererror'));
           if (rss.querySelector('parsererror')) {
             document.dispatchEvent(new CustomEvent('invalidRSS'));
             return;
