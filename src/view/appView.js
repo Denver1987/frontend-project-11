@@ -36,6 +36,12 @@ function renderInvalidRSS() {
   feedbackField.textContent = i18next.t('errors.noRSS');
 }
 
+function renderNetworkError() {
+  feedbackField.classList.remove('text-success', 'text-warning');
+  feedbackField.classList.add('text-danger');
+  feedbackField.textContent = i18next.t('errors.networkError');
+}
+
 function renderSuccess() {
   feedbackField.classList.remove('text-warning', 'text-danger');
   feedbackField.classList.add('text-success');
@@ -111,3 +117,5 @@ document.addEventListener('newRSSReceived', (/** @type CustomEvent */event) => {
 });
 
 document.addEventListener('invalidRSS', renderInvalidRSS);
+
+document.addEventListener('networkError', renderNetworkError);

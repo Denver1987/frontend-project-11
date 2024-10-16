@@ -26,25 +26,26 @@ export const app = {
     return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`)
       .then(
         (response) => response.data.contents,
-        (err) => {
-          if (err.message === 'Network Error') document.dispatchEvent(new CustomEvent('networkError'));
-        },
       )
-      .then((contents) => parser.parseFromString(contents, 'application/xml'))
+      .then(
+        (contents) => parser.parseFromString(contents, 'application/xml'),
+      )
       .then(
         (rss) => {
+          console.log(rss);
           if (rss.querySelector('parsererror')) {
             document.dispatchEvent(new CustomEvent('invalidRSS'));
-            return;
+          } else {
+            const feedId = this.addFeed(rss, url);
+            this.addItems(rss, feedId);
+            document.dispatchEvent(new CustomEvent('newRSSReceived', { detail: { feeds: this.feeds, items: this.items } }));
           }
-          const feedId = this.addFeed(rss, url);
-          this.addItems(rss, feedId);
-          document.dispatchEvent(new CustomEvent('newRSSReceived', { detail: { feeds: this.feeds, items: this.items } }));
         },
-        (err) => {
-          console.log(err);
-        },
-      );
+      )
+      .catch((err) => {
+        console.log(err);
+        if (err.message === 'Network Error') document.dispatchEvent(new CustomEvent('networkError'));
+      });
   },
   getFeed(rssMarkup, url) {
     const feedDesctiption = rssMarkup.querySelector('description').textContent;
