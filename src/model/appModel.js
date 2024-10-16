@@ -13,7 +13,7 @@ export const app = {
     isValid: true,
     setValidity(bool) {
       this.isValid = bool;
-      document.dispatchEvent(new CustomEvent('validitySetting', { detail: { isValid: this.isValid } }));
+      document.dispatchEvent(new CustomEvent('validitySets', { detail: { isValid: this.isValid } }));
     },
   },
 
@@ -24,14 +24,31 @@ export const app = {
   getRss(url) {
     const parser = new DOMParser();
     return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`)
-      .then((response) => response.data.contents)
+      .then(
+        (response) => {
+          console.log(response.data.status.content_type);
+          return response.data.contents;
+        },
+        (err) => {
+          if (err.message === 'Network Error') document.dispatchEvent(new CustomEvent('networkError'));
+        },
+      )
       .then((contents) => parser.parseFromString(contents, 'application/xml'))
-      .then((rss) => {
-        console.log(rss);
-        const feedId = this.addFeed(rss, url);
-        this.addItems(rss, feedId);
-        document.dispatchEvent(new CustomEvent('newRSSReceived', { detail: { feeds: this.feeds, items: this.items } }));
-      });
+      .then(
+        (rss) => {
+          console.log(rss, rss.querySelector('parsererror'));
+          if (rss.querySelector('parsererror')) {
+            document.dispatchEvent(new CustomEvent('invalidRSS'));
+            return;
+          }
+          const feedId = this.addFeed(rss, url);
+          this.addItems(rss, feedId);
+          document.dispatchEvent(new CustomEvent('newRSSReceived', { detail: { feeds: this.feeds, items: this.items } }));
+        },
+        (err) => {
+          console.log(err);
+        },
+      );
   },
   getFeed(rssMarkup, url) {
     const feedDesctiption = rssMarkup.querySelector('description').textContent;

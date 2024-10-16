@@ -11,23 +11,27 @@ const feedsField = document.querySelector('.feeds');
 function renderValidity(bool) {
   if (bool) {
     urlInput.classList.remove('is-invalid');
-    urlInput.classList.add('is-valid');
     feedbackField.textContent = '';
   } else {
     feedbackField.classList.remove('text-success', 'text-warning');
     feedbackField.classList.add('text-danger');
-    urlInput.classList.remove('is-valid');
     urlInput.classList.add('is-invalid');
     feedbackField.textContent = i18next.t('errors.invalid');
   }
 }
 
 function renderDoubles() {
-  urlInput.classList.remove('is-valid');
+
   urlInput.classList.add('is-invalid');
   feedbackField.classList.remove('text-success', 'text-warning');
   feedbackField.classList.add('text-danger');
   feedbackField.textContent = i18next.t('errors.rssExists');
+}
+
+function renderInvalidRSS() {
+  feedbackField.classList.remove('text-success', 'text-warning');
+  feedbackField.classList.add('text-danger');
+  feedbackField.textContent = i18next.t('errors.noRSS');
 }
 
 function renderSuccess() {
@@ -85,10 +89,16 @@ function renderRSS(feeds, items) {
   });
 }
 
-urlForm.addEventListener('submit', onSubmitHandler);
-document.addEventListener('validitySetting', (/** @type CustomEvent */event) => {
+urlForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  urlInput.classList.remove('is-invalid');
+  onSubmitHandler(event);
+});
+
+document.addEventListener('validitySets', (/** @type CustomEvent */event) => {
   renderValidity(event.detail.isValid);
 });
+
 document.addEventListener('enteredDouble', renderDoubles);
 
 document.addEventListener('newRSSReceived', (/** @type CustomEvent */event) => {
@@ -96,3 +106,5 @@ document.addEventListener('newRSSReceived', (/** @type CustomEvent */event) => {
   renderRSS(event.detail.feeds, event.detail.items);
   renderSuccess();
 });
+
+document.addEventListener('invalidRSS', renderInvalidRSS);
