@@ -11,17 +11,19 @@ const feedsField = document.querySelector('.feeds');
 function renderValidity(bool) {
   if (bool) {
     urlInput.classList.remove('is-invalid');
+    urlInput.classList.add('is-valid');
     feedbackField.textContent = '';
   } else {
     feedbackField.classList.remove('text-success', 'text-warning');
     feedbackField.classList.add('text-danger');
+    urlInput.classList.remove('is-valid');
     urlInput.classList.add('is-invalid');
     feedbackField.textContent = i18next.t('errors.invalid');
   }
 }
 
 function renderDoubles() {
-
+  urlInput.classList.remove('is-valid');
   urlInput.classList.add('is-invalid');
   feedbackField.classList.remove('text-success', 'text-warning');
   feedbackField.classList.add('text-danger');
@@ -91,6 +93,7 @@ function renderRSS(feeds, items) {
 
 urlForm.addEventListener('submit', (event) => {
   event.preventDefault();
+  urlInput.classList.remove('is-valid');
   urlInput.classList.remove('is-invalid');
   onSubmitHandler(event);
 });
