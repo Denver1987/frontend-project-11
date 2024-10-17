@@ -1,5 +1,5 @@
 import i18next from 'i18next';
-import onSubmitHandler from '../controller/appController.js';
+import { onSubmitHandler, onLinkClickHandler, onViewButtonClickHandler } from '../controller/appController.js';
 
 const urlForm = document.querySelector('.rss-form');
 /** @type HTMLInputElement */
@@ -58,8 +58,8 @@ function createPostsField() {
 
 function renderPost(item) {
   return `<li class="list-group-item d-flex justify-content-between align-items-start border-0 border-end-0">
-        <a href="${item.link}" class="fw-bold" data-id="${item.itemId}" target="_blank" rel="noopener noreferrer">${item.title}</a>
-        <button type="button" class="btn btn-outline-primary btn-sm" data-id="${item.itemId}" data-bs-toggle="modal" data-bs-target="#modal">${i18next.t('seeMore')}</button>
+        <a href="${item.link}" class="fw-bold" data-id="${item.id}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+        <button type="button" class="btn btn-outline-primary btn-sm" data-id="${item.id}" data-bs-toggle="modal" data-bs-target="#modal">${i18next.t('seeMore')}</button>
       </li>`;
 }
 
@@ -80,6 +80,12 @@ function createFeedsField() {
   </div>`;
 }
 
+function renderViewedLink(event) {
+  const link = document.querySelector(`a[data-id='${event.detail.linkId}']`);
+  link.classList.remove('fw-bold');
+  link.classList.add('fw-normal', 'link-secondary');
+}
+
 function renderRSS(feeds, items) {
   postsField.innerHTML = '';
   feedsField.innerHTML = '';
@@ -89,12 +95,26 @@ function renderRSS(feeds, items) {
   // eslint-disable-next-line array-callback-return
   items.map((item) => {
     postList.insertAdjacentHTML('beforeend', renderPost(item));
+    const lastListItem = postList.querySelector('li:last-child');
+    console.log(lastListItem);
+    lastListItem.querySelector('a').addEventListener('click', onLinkClickHandler);
+    lastListItem.querySelector('button').addEventListener('click', onViewButtonClickHandler);
   });
   const feedList = feedsField.querySelector('ul');
   // eslint-disable-next-line array-callback-return
   feeds.map((feed) => {
     feedList.insertAdjacentHTML('beforeend', renderFeed(feed));
   });
+}
+
+function renderModalData(event) {
+  const modalTitle = document.querySelector('.modal-title');
+  const modalBody = document.querySelector('.modal-body');
+  const modalButton = document.querySelector('.modal-footer .btn');
+  console.log(modalTitle);
+  modalTitle.textContent = event.detail.title;
+  modalBody.innerHTML = event.detail.text;
+  modalButton.setAttribute('href', event.detail.link);
 }
 
 urlForm.addEventListener('submit', (event) => {
@@ -119,3 +139,7 @@ document.addEventListener('newRSSReceived', (/** @type CustomEvent */event) => {
 document.addEventListener('invalidRSS', renderInvalidRSS);
 
 document.addEventListener('networkError', renderNetworkError);
+
+document.addEventListener('linkClick', renderViewedLink);
+
+document.addEventListener('postDataSends', renderModalData);

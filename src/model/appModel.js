@@ -6,8 +6,8 @@ import ru from '../i18n/ru.js';
 
 export const app = {
   feeds: [],
-  items: [],
-  viewedLinks: [],
+  posts: [],
+  clickedLinks: [],
   validationScheme: yup.string().url(),
   form: {
     isValid: true,
@@ -17,11 +17,35 @@ export const app = {
     },
   },
 
+  addClickedLinks(linkId) {
+    if (!this.clickedLinks.includes(linkId)) {
+      this.clickedLinks.unshift(linkId);
+      document.dispatchEvent(new CustomEvent('linkClick', { detail: { linkId } }));
+    }
+    console.log(this.clickedLinks);
+  },
+
   validate(url) {
     return this.validationScheme.validate(url);
   },
 
-  getRss(url) {
+  getPostData(postId) {
+    let result;
+    console.log(postId);
+    this.posts.forEach((post) => {
+      if (post.id === postId) {
+        result = post;
+      }
+    });
+    return result;
+  },
+
+  sendPostData(postId) {
+    const post = this.getPostData(postId);
+    document.dispatchEvent(new CustomEvent('postDataSends', { detail: { title: post.title, text: post.text, link: post.link } }));
+  },
+
+  requestRss(url) {
     const parser = new DOMParser();
     return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`)
       .then(
@@ -38,7 +62,7 @@ export const app = {
           } else {
             const feedId = this.addFeed(rss, url);
             this.addItems(rss, feedId);
-            document.dispatchEvent(new CustomEvent('newRSSReceived', { detail: { feeds: this.feeds, items: this.items } }));
+            document.dispatchEvent(new CustomEvent('newRSSReceived', { detail: { feeds: this.feeds, items: this.posts } }));
           }
         },
       )
@@ -47,7 +71,8 @@ export const app = {
         if (err.message === 'Network Error') document.dispatchEvent(new CustomEvent('networkError'));
       });
   },
-  getFeed(rssMarkup, url) {
+
+  parseFeed(rssMarkup, url) {
     const feedDesctiption = rssMarkup.querySelector('description').textContent;
     const feedTitle = rssMarkup.querySelector('title').textContent;
     return {
@@ -57,32 +82,36 @@ export const app = {
       url,
     };
   },
+
   addFeed(rssMarkup, url) {
-    const feed = this.getFeed(rssMarkup, url);
+    const feed = this.parseFeed(rssMarkup, url);
     this.feeds.unshift(feed);
     console.log(this.feeds);
     return feed.feedId;
   },
-  getItems(rssMarkup) {
+
+  parseItems(rssMarkup) {
     const items = rssMarkup.querySelectorAll('item');
     return items;
   },
+
   createItemData(itemMarkup, feedId) {
     const itemLink = itemMarkup.querySelector('link').textContent;
     const itemTitle = itemMarkup.querySelector('title').textContent;
     const itemDescription = itemMarkup.querySelector('description').textContent;
     return {
-      itemId: getUUID(),
+      id: getUUID(),
       feedId,
       link: itemLink,
       title: itemTitle,
       text: itemDescription,
     };
   },
+
   addItems(rssMarkup, feedId) {
-    const items = this.getItems(rssMarkup);
-    items.forEach((item) => this.items.unshift(this.createItemData(item, feedId)));
-    console.log(this.items);
+    const items = this.parseItems(rssMarkup);
+    items.forEach((item) => this.posts.unshift(this.createItemData(item, feedId)));
+    console.log(this.posts);
   },
 
   checkDoubles(newUrl) {

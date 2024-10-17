@@ -1,16 +1,15 @@
 import { app } from '../model/appModel.js';
 
-export default function onSubmitHandler(event) {
+export function onSubmitHandler(event) {
   event.preventDefault();
   const formData = (new FormData(event.target)).get('url');
   if (!app.checkDoubles(formData)) {
-    // const enteredUrl = formData.get('url');
     // @ts-ignore
     app.validate(formData)
       .then(
         () => {
           app.form.setValidity(true);
-          if (!app.checkDoubles(formData)) app.getRss(formData);
+          if (!app.checkDoubles(formData)) app.requestRss(formData);
           else app.form.setValidity(false);
         },
         (err) => {
@@ -22,4 +21,13 @@ export default function onSubmitHandler(event) {
     //   app.getRss();
     // }
   }
+}
+
+export function onLinkClickHandler(event) {
+  app.addClickedLinks(event.target.dataset.id);
+}
+
+export function onViewButtonClickHandler(event) {
+  app.addClickedLinks(event.target.dataset.id);
+  console.log(app.sendPostData(event.target.dataset.id));
 }
