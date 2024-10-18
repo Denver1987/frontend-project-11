@@ -48,6 +48,13 @@ function renderSuccess() {
   feedbackField.textContent = i18next.t('success');
 }
 
+function postLink(strings, link, clickedLinks, id, title) {
+  let linkClass;
+  if (clickedLinks.includes(id)) linkClass = 'fw-normal link-secondary';
+  else linkClass = 'fw-bold';
+  return `${strings[0]}${link}${strings[1]}${linkClass}${strings[2]}${id}${strings[3]}${title}${strings[4]}`;
+}
+
 function createPostsField() {
   return `<div class="card border-0">
     <div class="card-body"><h2 class="card-title h4">Посты</h2></div>
@@ -56,10 +63,10 @@ function createPostsField() {
   </div>`;
 }
 
-function renderPost(item) {
-  return `<li class="list-group-item d-flex justify-content-between align-items-start border-0 border-end-0">
-        <a href="${item.link}" class="fw-bold" data-id="${item.id}" target="_blank" rel="noopener noreferrer">${item.title}</a>
-        <button type="button" class="btn btn-outline-primary btn-sm" data-id="${item.id}" data-bs-toggle="modal" data-bs-target="#modal">${i18next.t('seeMore')}</button>
+function renderPost(item, clickedLinks) {
+  return `<li class="list-group-item d-flex justify-content-between align-items-start border-0 border-end-0">${
+    postLink`<a href="${item.link}" class="${clickedLinks}" data-id="${item.id}" target="_blank" rel="noopener noreferrer">${item.title}</a>`
+  }<button type="button" class="btn btn-outline-primary btn-sm" data-id="${item.id}" data-bs-toggle="modal" data-bs-target="#modal">${i18next.t('seeMore')}</button>
       </li>`;
 }
 
@@ -86,7 +93,7 @@ function renderViewedLink(event) {
   link.classList.add('fw-normal', 'link-secondary');
 }
 
-function renderRSS(feeds, items) {
+function renderRSS(feeds, items, clickedLinks) {
   postsField.innerHTML = '';
   feedsField.innerHTML = '';
   postsField.insertAdjacentHTML('beforeend', createPostsField());
@@ -94,9 +101,8 @@ function renderRSS(feeds, items) {
   const postList = postsField.querySelector('ul');
   // eslint-disable-next-line array-callback-return
   items.map((item) => {
-    postList.insertAdjacentHTML('beforeend', renderPost(item));
+    postList.insertAdjacentHTML('beforeend', renderPost(item, clickedLinks));
     const lastListItem = postList.querySelector('li:last-child');
-    console.log(lastListItem);
     lastListItem.querySelector('a').addEventListener('click', onLinkClickHandler);
     lastListItem.querySelector('button').addEventListener('click', onViewButtonClickHandler);
   });
@@ -132,7 +138,7 @@ document.addEventListener('enteredDouble', renderDoubles);
 
 document.addEventListener('newRSSReceived', (/** @type CustomEvent */event) => {
   urlInput.value = '';
-  renderRSS(event.detail.feeds, event.detail.items);
+  renderRSS(event.detail.feeds, event.detail.items, event.detail.clickedLinks);
   renderSuccess();
 });
 

@@ -22,7 +22,6 @@ export const app = {
       this.clickedLinks.unshift(linkId);
       document.dispatchEvent(new CustomEvent('linkClick', { detail: { linkId } }));
     }
-    console.log(this.clickedLinks);
   },
 
   validate(url) {
@@ -31,7 +30,6 @@ export const app = {
 
   getPostData(postId) {
     let result;
-    console.log(postId);
     this.posts.forEach((post) => {
       if (post.id === postId) {
         result = post;
@@ -42,6 +40,7 @@ export const app = {
 
   sendPostData(postId) {
     const post = this.getPostData(postId);
+    // @ts-ignore
     document.dispatchEvent(new CustomEvent('postDataSends', { detail: { title: post.title, text: post.text, link: post.link } }));
   },
 
@@ -56,13 +55,12 @@ export const app = {
       )
       .then(
         (rss) => {
-          console.log(rss);
           if (rss.querySelector('parsererror')) {
             document.dispatchEvent(new CustomEvent('invalidRSS'));
           } else {
             const feedId = this.addFeed(rss, url);
             this.addItems(rss, feedId);
-            document.dispatchEvent(new CustomEvent('newRSSReceived', { detail: { feeds: this.feeds, items: this.posts } }));
+            document.dispatchEvent(new CustomEvent('newRSSReceived', { detail: { feeds: this.feeds, items: this.posts, clickedLinks: this.clickedLinks } }));
           }
         },
       )
@@ -86,7 +84,6 @@ export const app = {
   addFeed(rssMarkup, url) {
     const feed = this.parseFeed(rssMarkup, url);
     this.feeds.unshift(feed);
-    console.log(this.feeds);
     return feed.feedId;
   },
 
