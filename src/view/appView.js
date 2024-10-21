@@ -8,26 +8,26 @@ const feedbackField = document.querySelector('.feedback');
 const postsField = document.querySelector('.posts');
 const feedsField = document.querySelector('.feeds');
 
-function renderValidity(bool) {
-  if (bool) {
+function renderValidity(isValid, error) {
+  if (isValid) {
     urlInput.classList.remove('is-invalid');
     urlInput.classList.add('is-valid');
     feedbackField.textContent = '';
   } else {
-    feedbackField.classList.remove('text-success', 'text-warning');
-    feedbackField.classList.add('text-danger');
-    urlInput.classList.remove('is-valid');
-    urlInput.classList.add('is-invalid');
-    feedbackField.textContent = i18next.t('errors.invalid');
+    if (error === 'double') {
+      urlInput.classList.remove('is-valid');
+      urlInput.classList.add('is-invalid');
+      feedbackField.classList.remove('text-success', 'text-warning');
+      feedbackField.classList.add('text-danger');
+      feedbackField.textContent = i18next.t('errors.rssExists');
+    } if (error === 'invalidURL') {
+      feedbackField.classList.remove('text-success', 'text-warning');
+      feedbackField.classList.add('text-danger');
+      urlInput.classList.remove('is-valid');
+      urlInput.classList.add('is-invalid');
+      feedbackField.textContent = i18next.t('errors.invalid');
+    }
   }
-}
-
-function renderDoubles() {
-  urlInput.classList.remove('is-valid');
-  urlInput.classList.add('is-invalid');
-  feedbackField.classList.remove('text-success', 'text-warning');
-  feedbackField.classList.add('text-danger');
-  feedbackField.textContent = i18next.t('errors.rssExists');
 }
 
 function renderInvalidRSS() {
@@ -131,10 +131,8 @@ urlForm.addEventListener('submit', (event) => {
 });
 
 document.addEventListener('validitySets', (/** @type CustomEvent */event) => {
-  renderValidity(event.detail.isValid);
+  renderValidity(event.detail.isValid, event.detail.error);
 });
-
-document.addEventListener('enteredDouble', renderDoubles);
 
 document.addEventListener('newRSSReceived', (/** @type CustomEvent */event) => {
   urlInput.value = '';

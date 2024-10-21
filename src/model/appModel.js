@@ -14,9 +14,9 @@ export const app = {
   validationScheme: yup.string().url(),
   form: {
     isValid: true,
-    setValidity(bool) {
-      this.isValid = bool;
-      document.dispatchEvent(new CustomEvent('validitySets', { detail: { isValid: this.isValid } }));
+    setValidity(isValid, error) {
+      this.isValid = isValid;
+      document.dispatchEvent(new CustomEvent('validitySets', { detail: { isValid: this.isValid, error } }));
     },
   },
 
@@ -136,13 +136,13 @@ export function processLinkClick(postId) {
 export function processNewUrl(newUrl) {
   validateUrl(newUrl).then(
     () => {
-      app.form.setValidity(true);
+      app.form.setValidity(true, null);
       if (!checkDoubles(newUrl)) requestRss(newUrl);
-      else app.form.setValidity(false);
+      else app.form.setValidity(false, 'double');
     },
     (err) => {
       console.log(err);
-      app.form.setValidity(false);
+      app.form.setValidity(false, 'invalidURL');
     },
   );
 }
