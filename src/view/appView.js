@@ -48,11 +48,11 @@ function renderSuccess() {
   feedbackField.textContent = i18next.t('success');
 }
 
-function postLink(strings, link, clickedLinks, id, title) {
+function postLink(strings, link, clickedLinks, id) {
   let linkClass;
   if (clickedLinks.includes(id)) linkClass = 'fw-normal link-secondary';
   else linkClass = 'fw-bold';
-  return `${strings[0]}${link}${strings[1]}${linkClass}${strings[2]}${id}${strings[3]}${title}${strings[4]}`;
+  return `${strings[0]}${link}${strings[1]}${linkClass}${strings[2]}${id}${strings[3]}`;
 }
 
 function createPostsField() {
@@ -65,8 +65,8 @@ function createPostsField() {
 
 function renderPost(item, clickedLinks) {
   return `<li class="list-group-item d-flex justify-content-between align-items-start border-0 border-end-0">${
-    postLink`<a href="${item.link}" class="${clickedLinks}" data-id="${item.id}" target="_blank" rel="noopener noreferrer">${item.title}</a>`
-  }<button type="button" class="btn btn-outline-primary btn-sm" data-id="${item.id}" data-bs-toggle="modal" data-bs-target="#modal">${i18next.t('seeMore')}</button>
+    postLink`<a href="${item.link}" class="${clickedLinks}" data-id="${item.id}"`} target="_blank"} rel="noopener noreferrer">${item.title}</a>
+    <button type="button" class="btn btn-outline-primary btn-sm" data-id="${item.id}" data-bs-toggle="modal" data-bs-target="#modal">${i18next.t('seeMore')}</button>
       </li>`;
 }
 
