@@ -50,7 +50,7 @@ function renderSuccess() {
 
 function postLink(strings, link, clickedLinks, id) {
   let linkClass;
-  if (clickedLinks.includes(id)) linkClass = 'fw-normal link-secondary';
+  if (clickedLinks && clickedLinks.includes(id)) linkClass = 'fw-normal link-secondary';
   else linkClass = 'fw-bold';
   return `${strings[0]}${link}${strings[1]}${linkClass}${strings[2]}${id}${strings[3]}`;
 }
@@ -113,6 +113,14 @@ function renderRSS(feeds, items, clickedLinks) {
   });
 }
 
+function renderNewPost(event) {
+  const postList = postsField.querySelector('ul');
+  postList.insertAdjacentHTML('afterbegin', renderPost(event.detail.item));
+  const insertedListItem = postList.querySelector('li:first-child');
+  insertedListItem.querySelector('a').addEventListener('click', onLinkClickHandler);
+  insertedListItem.querySelector('button').addEventListener('click', onViewButtonClickHandler);
+}
+
 function renderModalData(event) {
   const modalTitle = document.querySelector('.modal-title');
   const modalBody = document.querySelector('.modal-body');
@@ -121,6 +129,12 @@ function renderModalData(event) {
   modalTitle.textContent = event.detail.title;
   modalBody.innerHTML = event.detail.text;
   modalButton.setAttribute('href', event.detail.link);
+}
+
+function renderFormButtonBlock(event) {
+  /** @type { HTMLButtonElement } */
+  const formButton = urlForm.querySelector('button[type="submit"]');
+  formButton.disabled = event.detail.isBlocked;
 }
 
 urlForm.addEventListener('submit', (event) => {
@@ -140,6 +154,8 @@ document.addEventListener('newRSSReceived', (/** @type CustomEvent */event) => {
   renderSuccess();
 });
 
+document.addEventListener('newPostReceived', renderNewPost);
+
 document.addEventListener('invalidRSS', renderInvalidRSS);
 
 document.addEventListener('networkError', renderNetworkError);
@@ -147,3 +163,5 @@ document.addEventListener('networkError', renderNetworkError);
 document.addEventListener('linkClick', renderViewedLink);
 
 document.addEventListener('postDataSends', renderModalData);
+
+document.addEventListener('buttonBlockSets', renderFormButtonBlock);

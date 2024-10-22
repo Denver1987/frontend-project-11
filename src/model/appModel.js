@@ -13,10 +13,15 @@ export const app = {
   clickedLinks: [],
   validationScheme: yup.string().url(),
   form: {
+    isButtonBlocked: false,
     isValid: true,
     setValidity(isValid, error) {
       this.isValid = isValid;
       document.dispatchEvent(new CustomEvent('validitySets', { detail: { isValid: this.isValid, error } }));
+    },
+    blockButton(isBlocked) {
+      this.isButtonBlocked = isBlocked;
+      document.dispatchEvent(new CustomEvent('buttonBlockSets', { detail: { isBlocked: this.isButtonBlocked } }));
     },
   },
 
@@ -77,6 +82,11 @@ export const app = {
     items.forEach((item) => this.posts.unshift(this.createPostData(item, feedId)));
     console.log(this.posts);
   },
+
+  addNewItem(itemData) {
+    app.posts.unshift(itemData);
+    console.log(app.posts);
+  },
 };
 
 function validateUrl(newUrl) {
@@ -96,10 +106,7 @@ function requestRss(url) {
   const parser = new DOMParser();
   return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`)
     .then(
-      (response) => response.data.contents,
-    )
-    .then(
-      (contents) => parser.parseFromString(contents, 'application/xml'),
+      (response) => parser.parseFromString(response.data.contents, 'application/xml'),
     )
     .then(
       (rss) => {
@@ -118,6 +125,24 @@ function requestRss(url) {
     });
 }
 
+function parseItems(rssMarkup) {
+  const items = rssMarkup.querySelectorAll('item');
+  return items;
+}
+
+function createPostData(itemMarkup, feedId) {
+  const postLink = itemMarkup.querySelector('link').textContent;
+  const postTitle = itemMarkup.querySelector('title').textContent;
+  const postDescription = itemMarkup.querySelector('description').textContent;
+  return {
+    id: getUUID(),
+    feedId,
+    link: postLink,
+    title: postTitle,
+    text: postDescription,
+  };
+}
+
 function sendPostData(postId) {
   const post = app.getPostData(postId);
   // @ts-ignore
@@ -134,22 +159,54 @@ export function processLinkClick(postId) {
 }
 
 export function processNewUrl(newUrl) {
+  app.form.blockButton(true);
   validateUrl(newUrl).then(
     () => {
       app.form.setValidity(true, null);
-      if (!checkDoubles(newUrl)) requestRss(newUrl);
-      else app.form.setValidity(false, 'double');
+      if (!checkDoubles(newUrl)) requestRss(newUrl).then(() => app.form.blockButton(false));
+      else {
+        app.form.setValidity(false, 'double');
+        app.form.blockButton(false);
+      }
     },
     (err) => {
       console.log(err);
       app.form.setValidity(false, 'invalidURL');
+      app.form.blockButton(false);
     },
   );
 }
 
+function checkNewPosts(url, feedId) {
+  const existsPosts = app.posts.map((post) => ({ title: post.title, text: post.text }));
+  const parser = new DOMParser();
+  return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`)
+    .then(
+      (response) => parser.parseFromString(response.data.contents, 'application/xml'),
+    )
+    .then(
+      (rss) => {
+        const items = parseItems(rss);
+        items.forEach((item) => {
+          const itemData = createPostData(item, feedId);
+          if (existsPosts.some((post) => post.text === itemData.text
+          && post.title === itemData.title)) return;
+          console.log('new', itemData);
+          app.addNewItem(itemData);
+          document.dispatchEvent(new CustomEvent('newPostReceived', { detail: { item: itemData } }));
+        });
+      },
+    )
+    .catch((err) => {
+      console.log(err);
+    });
+}
+
 function updateFeeds(feeds) {
-  console.log(feeds);
-  feeds.map(() => {});
+  // eslint-disable-next-line array-callback-return
+  feeds.map((feed) => {
+    checkNewPosts(feed.url, feed.feedId);
+  });
 }
 
 export default function initApp() {
