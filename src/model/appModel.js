@@ -1,8 +1,10 @@
 import { v6 as getUUID } from 'uuid';
-import axios from 'axios';
 import i18next from 'i18next';
 import * as yup from 'yup';
 import ru from '../i18n/ru.js';
+import { loadRSS } from '../service/network.js';
+import { getMarkupFromRss } from '../service/parseRSS.js';
+import { validateUrl, checkDoubles } from '../service/validation.js';
 
 export const app = {
   settings: {
@@ -15,10 +17,12 @@ export const app = {
   form: {
     isButtonBlocked: false,
     isValid: true,
+
     setValidity(isValid, error) {
       this.isValid = isValid;
       document.dispatchEvent(new CustomEvent('validitySets', { detail: { isValid: this.isValid, error } }));
     },
+
     blockButton(isBlocked) {
       this.isButtonBlocked = isBlocked;
       document.dispatchEvent(new CustomEvent('buttonBlockSets', { detail: { isBlocked: this.isButtonBlocked } }));
@@ -42,26 +46,10 @@ export const app = {
     return result;
   },
 
-  parseFeed(rssMarkup, url) {
-    const feedDesctiption = rssMarkup.querySelector('description').textContent;
-    const feedTitle = rssMarkup.querySelector('title').textContent;
-    return {
-      feedId: getUUID(),
-      description: feedDesctiption,
-      title: feedTitle,
-      url,
-    };
-  },
-
   addFeed(rssMarkup, url) {
-    const feed = this.parseFeed(rssMarkup, url);
+    const feed = parseFeed(rssMarkup, url);
     this.feeds.unshift(feed);
     return feed.feedId;
-  },
-
-  parseItems(rssMarkup) {
-    const items = rssMarkup.querySelectorAll('item');
-    return items;
   },
 
   createPostData(itemMarkup, feedId) {
@@ -78,7 +66,7 @@ export const app = {
   },
 
   addItems(rssMarkup, feedId) {
-    const items = this.parseItems(rssMarkup);
+    const items = parseItems(rssMarkup);
     items.forEach((item) => this.posts.unshift(this.createPostData(item, feedId)));
     console.log(this.posts);
   },
@@ -89,32 +77,18 @@ export const app = {
   },
 };
 
-function validateUrl(newUrl) {
-  return app.validationScheme.validate(newUrl);
-}
-
-function checkDoubles(newUrl) {
-  const urls = app.feeds.map((feed) => feed.url);
-  if (urls.includes(newUrl)) {
-    document.dispatchEvent(new CustomEvent('enteredDouble'));
-    return true;
-  }
-  return false;
-}
-
 function requestRss(url) {
-  const parser = new DOMParser();
-  return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`)
+  return loadRSS(url)
     .then(
-      (response) => parser.parseFromString(response.data.contents, 'application/xml'),
+      (response) => getMarkupFromRss(response),
     )
     .then(
-      (rss) => {
-        if (rss.querySelector('parsererror')) {
+      (rssMarkup) => {
+        if (rssMarkup.querySelector('parsererror')) {
           document.dispatchEvent(new CustomEvent('invalidRSS'));
         } else {
-          const feedId = app.addFeed(rss, url);
-          app.addItems(rss, feedId);
+          const feedId = app.addFeed(rssMarkup, url);
+          app.addItems(rssMarkup, feedId);
           document.dispatchEvent(new CustomEvent('newRSSReceived', { detail: { feeds: app.feeds, items: app.posts, clickedLinks: app.clickedLinks } }));
         }
       },
@@ -128,6 +102,17 @@ function requestRss(url) {
 function parseItems(rssMarkup) {
   const items = rssMarkup.querySelectorAll('item');
   return items;
+}
+
+function parseFeed(rssMarkup, url) {
+  const feedDesctiption = rssMarkup.querySelector('description').textContent;
+  const feedTitle = rssMarkup.querySelector('title').textContent;
+  return {
+    feedId: getUUID(),
+    description: feedDesctiption,
+    title: feedTitle,
+    url,
+  };
 }
 
 function createPostData(itemMarkup, feedId) {
@@ -160,11 +145,12 @@ export function processLinkClick(postId) {
 
 export function processNewUrl(newUrl) {
   app.form.blockButton(true);
-  validateUrl(newUrl).then(
+  validateUrl(newUrl, app.validationScheme).then(
     () => {
       app.form.setValidity(true, null);
-      if (!checkDoubles(newUrl)) requestRss(newUrl).then(() => app.form.blockButton(false));
-      else {
+      if (!checkDoubles(newUrl, app.feeds)) {
+        requestRss(newUrl).then(() => app.form.blockButton(false));
+      } else {
         app.form.setValidity(false, 'double');
         app.form.blockButton(false);
       }
@@ -179,10 +165,9 @@ export function processNewUrl(newUrl) {
 
 function checkNewPosts(url, feedId) {
   const existsPosts = app.posts.map((post) => ({ title: post.title, text: post.text }));
-  const parser = new DOMParser();
-  return axios.get(`https://allorigins.hexlet.app/get?disableCache=true&url=${encodeURIComponent(url)}`)
+  return loadRSS(url)
     .then(
-      (response) => parser.parseFromString(response.data.contents, 'application/xml'),
+      (response) => getMarkupFromRss(response),
     )
     .then(
       (rss) => {
