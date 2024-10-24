@@ -8,43 +8,55 @@ const feedbackField = document.querySelector('.feedback');
 const postsField = document.querySelector('.posts');
 const feedsField = document.querySelector('.feeds');
 
+function renderInvalidInput() {
+  urlInput.classList.remove('is-valid');
+  urlInput.classList.add('is-invalid');
+}
+
+function renderValidInput() {
+  urlInput.classList.remove('is-invalid');
+  urlInput.classList.add('is-valid');
+}
+
+function renderTextDanger() {
+  feedbackField.classList.remove('text-success', 'text-warning');
+  feedbackField.classList.add('text-danger');
+}
+
+function renderTextSuccess() {
+  feedbackField.classList.remove('text-warning', 'text-danger');
+  feedbackField.classList.add('text-success');
+}
+
 function renderValidity(isValid, error) {
   if (isValid) {
-    urlInput.classList.remove('is-invalid');
-    urlInput.classList.add('is-valid');
+    renderValidInput();
     feedbackField.textContent = '';
   } else {
     if (error === 'double') {
-      urlInput.classList.remove('is-valid');
-      urlInput.classList.add('is-invalid');
-      feedbackField.classList.remove('text-success', 'text-warning');
-      feedbackField.classList.add('text-danger');
+      renderInvalidInput();
+      renderTextDanger();
       feedbackField.textContent = i18next.t('errors.rssExists');
     } if (error === 'invalidURL') {
-      feedbackField.classList.remove('text-success', 'text-warning');
-      feedbackField.classList.add('text-danger');
-      urlInput.classList.remove('is-valid');
-      urlInput.classList.add('is-invalid');
+      renderInvalidInput();
+      renderTextDanger();
       feedbackField.textContent = i18next.t('errors.invalid');
     }
   }
 }
 
 function renderInvalidRSS() {
-  feedbackField.classList.remove('text-success', 'text-warning');
-  feedbackField.classList.add('text-danger');
+  renderTextDanger();
   feedbackField.textContent = i18next.t('errors.noRSS');
 }
 
 function renderNetworkError() {
-  feedbackField.classList.remove('text-success', 'text-warning');
-  feedbackField.classList.add('text-danger');
+  renderTextDanger();
   feedbackField.textContent = i18next.t('errors.networkError');
 }
 
 function renderSuccess() {
-  feedbackField.classList.remove('text-warning', 'text-danger');
-  feedbackField.classList.add('text-success');
+  renderTextSuccess();
   feedbackField.textContent = i18next.t('success');
 }
 
