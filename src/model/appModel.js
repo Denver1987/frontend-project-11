@@ -1,19 +1,30 @@
-import { v6 as getUUID } from 'uuid';
 import i18next from 'i18next';
 import * as yup from 'yup';
 import ru from '../i18n/ru.js';
-import { loadRSS } from '../service/network.js';
-import { getMarkupFromRss } from '../service/parseRSS.js';
+import loadRSS from '../service/network.js';
+import {
+  getMarkupFromRss, parseItems, parseFeed, createPost,
+} from '../service/parseRSS.js';
 import { validateUrl, checkDoubles } from '../service/validation.js';
 
 export const app = {
   settings: {
     updatingInterval: 5000,
+    locale: 'ru',
+    getUpdatingInterval() {
+      return this.updatingInterval;
+    },
+    getLocale() {
+      return this.locale;
+    },
   },
+
   feeds: [],
   posts: [],
   clickedLinks: [],
+
   validationScheme: yup.string().url(),
+
   form: {
     isButtonBlocked: false,
     isValid: true,
@@ -29,21 +40,33 @@ export const app = {
     },
   },
 
-  addClickedLinks(linkId) {
-    if (!this.clickedLinks.includes(linkId)) {
-      this.clickedLinks.unshift(linkId);
-      document.dispatchEvent(new CustomEvent('linkClick', { detail: { linkId } }));
-    }
+  getClickedLinks() {
+    return this.clickedLinks;
   },
 
-  getPostData(postId) {
+  getPosts() {
+    return this.posts;
+  },
+
+  getFeeds() {
+    return this.feeds;
+  },
+
+  getPost(postId) {
     let result;
-    this.posts.forEach((post) => {
+    this.getPosts().forEach((post) => {
       if (post.id === postId) {
         result = post;
       }
     });
     return result;
+  },
+
+  addClickedLink(linkId) {
+    if (!this.clickedLinks.includes(linkId)) {
+      this.clickedLinks.unshift(linkId);
+      document.dispatchEvent(new CustomEvent('linkClick', { detail: { linkId } }));
+    }
   },
 
   addFeed(rssMarkup, url) {
@@ -52,28 +75,15 @@ export const app = {
     return feed.feedId;
   },
 
-  createPostData(itemMarkup, feedId) {
-    const itemLink = itemMarkup.querySelector('link').textContent;
-    const itemTitle = itemMarkup.querySelector('title').textContent;
-    const itemDescription = itemMarkup.querySelector('description').textContent;
-    return {
-      id: getUUID(),
-      feedId,
-      link: itemLink,
-      title: itemTitle,
-      text: itemDescription,
-    };
-  },
-
-  addItems(rssMarkup, feedId) {
+  addPosts(rssMarkup, feedId) {
     const items = parseItems(rssMarkup);
-    items.forEach((item) => this.posts.unshift(this.createPostData(item, feedId)));
-    console.log(this.posts);
+    items.forEach((item) => this.posts.unshift(createPost(item, feedId)));
+    document.dispatchEvent(new CustomEvent('newRSSReceived', { detail: { feeds: this.getFeeds(), items: this.getPosts(), clickedLinks: this.getClickedLinks() } }));
   },
 
-  addNewItem(itemData) {
-    app.posts.unshift(itemData);
-    console.log(app.posts);
+  addNewPost(post) {
+    app.posts.unshift(post);
+    document.dispatchEvent(new CustomEvent('newPostReceived', { detail: { item: post } }));
   },
 };
 
@@ -88,8 +98,7 @@ function requestRss(url) {
           document.dispatchEvent(new CustomEvent('invalidRSS'));
         } else {
           const feedId = app.addFeed(rssMarkup, url);
-          app.addItems(rssMarkup, feedId);
-          document.dispatchEvent(new CustomEvent('newRSSReceived', { detail: { feeds: app.feeds, items: app.posts, clickedLinks: app.clickedLinks } }));
+          app.addPosts(rssMarkup, feedId);
         }
       },
     )
@@ -99,48 +108,15 @@ function requestRss(url) {
     });
 }
 
-function parseItems(rssMarkup) {
-  const items = rssMarkup.querySelectorAll('item');
-  return items;
-}
-
-function parseFeed(rssMarkup, url) {
-  const feedDesctiption = rssMarkup.querySelector('description').textContent;
-  const feedTitle = rssMarkup.querySelector('title').textContent;
-  return {
-    feedId: getUUID(),
-    description: feedDesctiption,
-    title: feedTitle,
-    url,
-  };
-}
-
-function createPostData(itemMarkup, feedId) {
-  const postLink = itemMarkup.querySelector('link').textContent;
-  const postTitle = itemMarkup.querySelector('title').textContent;
-  const postDescription = itemMarkup.querySelector('description').textContent;
-  return {
-    id: getUUID(),
-    feedId,
-    link: postLink,
-    title: postTitle,
-    text: postDescription,
-  };
-}
-
-function sendPostData(postId) {
-  const post = app.getPostData(postId);
+export function processViewButtonClick(postId) {
+  app.addClickedLink(postId);
+  const post = app.getPost(postId);
   // @ts-ignore
   document.dispatchEvent(new CustomEvent('postDataSends', { detail: { title: post.title, text: post.text, link: post.link } }));
 }
 
-export function processViewButtonClick(postId) {
-  app.addClickedLinks(postId);
-  sendPostData(postId);
-}
-
 export function processLinkClick(postId) {
-  app.addClickedLinks(postId);
+  app.addClickedLink(postId);
 }
 
 export function processNewUrl(newUrl) {
@@ -164,21 +140,19 @@ export function processNewUrl(newUrl) {
 }
 
 function checkNewPosts(url, feedId) {
-  const existsPosts = app.posts.map((post) => ({ title: post.title, text: post.text }));
+  const existsPosts = app.getPosts().map((post) => ({ title: post.title, text: post.text }));
   return loadRSS(url)
     .then(
       (response) => getMarkupFromRss(response),
     )
     .then(
       (rss) => {
-        const items = parseItems(rss);
-        items.forEach((item) => {
-          const itemData = createPostData(item, feedId);
-          if (existsPosts.some((post) => post.text === itemData.text
-          && post.title === itemData.title)) return;
-          console.log('new', itemData);
-          app.addNewItem(itemData);
-          document.dispatchEvent(new CustomEvent('newPostReceived', { detail: { item: itemData } }));
+        const newItems = parseItems(rss);
+        newItems.forEach((item) => {
+          const newPost = createPost(item, feedId);
+          if (existsPosts.some((existsPost) => existsPost.text === newPost.text
+          && existsPost.title === newPost.title)) return;
+          app.addNewPost(newPost);
         });
       },
     )
@@ -196,7 +170,7 @@ function updateFeeds(feeds) {
 
 export default function initApp() {
   i18next.init({
-    lng: 'ru',
+    lng: app.settings.getLocale(),
     resources: {
       ru,
     },
@@ -204,9 +178,9 @@ export default function initApp() {
     .then(
       () => {
         setTimeout(function update() {
-          updateFeeds(app.feeds);
-          setTimeout(update, app.settings.updatingInterval);
-        }, app.settings.updatingInterval);
+          updateFeeds(app.getFeeds());
+          setTimeout(update, app.settings.getUpdatingInterval());
+        }, app.settings.getUpdatingInterval());
       },
     )
     .then(
