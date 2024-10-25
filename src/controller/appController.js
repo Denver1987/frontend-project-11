@@ -1,15 +1,27 @@
-import { app, processNewUrl, processViewButtonClick } from '../model/appModel.js';
+import { processNewUrl, processViewButtonClick, processLinkClick } from '../model/appModel.js';
 
+/**
+ * Обрабатывает отправку данных формы
+ * @param {Event} event
+ */
 export function onSubmitHandler(event) {
   event.preventDefault();
-  const url = (new FormData(event.target)).get('url');
-  processNewUrl(url);
+  const url = new FormData(/** @type HTMLFormElement */(event.target)).get('url');
+  processNewUrl(String(url));
 }
 
+/**
+ * Обрабатывает нажатие на ссылку-заголовок
+ * @param {Event} event
+ */
 export function onLinkClickHandler(event) {
-  app.addClickedLink(event.target.dataset.id);
+  processLinkClick(/** @type HTMLAnchorElement */(event.target).dataset.id);
 }
 
+/**
+ * Обрабатывает нажатие на кнопку просмотра поста
+ * @param {Event} event
+ */
 export function onViewButtonClickHandler(event) {
-  processViewButtonClick(event.target.dataset.id);
+  processViewButtonClick(/** @type HTMLAnchorElement */(event.target).dataset.id);
 }
