@@ -3,9 +3,9 @@ import * as yup from 'yup';
 import ru from '../i18n/ru.js';
 import loadRSS from '../service/network.js';
 import {
-  getMarkupFromRss, parseItems, parseFeed, createPost,
-} from '../service/parseRSS.js';
-import { validateUrl, checkDoubles } from '../service/validation.js';
+  getMarkupFromResponse, parseItems, parseFeed, createPost,
+} from './parseRSS.js';
+import { validateUrl, checkDoubles } from './validation.js';
 
 const app = {
   settings: {
@@ -154,11 +154,11 @@ const app = {
     const existsPosts = app.getPosts().map((post) => ({ title: post.title, text: post.text }));
     return loadRSS(url)
       .then(
-        (response) => getMarkupFromRss(response),
+        (response) => getMarkupFromResponse(response),
       )
       .then(
-        (rss) => {
-          const newItems = parseItems(rss);
+        (rssMarkup) => {
+          const newItems = parseItems(rssMarkup);
           newItems.forEach((item) => {
             const newPost = createPost(item, feedId);
             if (existsPosts.some((existsPost) => existsPost.text === newPost.text
@@ -180,7 +180,7 @@ const app = {
   requestRss(url) {
     return loadRSS(url)
       .then(
-        (response) => getMarkupFromRss(response),
+        (response) => getMarkupFromResponse(response),
       )
       .then(
         (rssMarkup) => {
