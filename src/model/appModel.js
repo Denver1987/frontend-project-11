@@ -148,11 +148,10 @@ const app = {
    * Проверяет наличие новых постов в уже существующем RSS-канале
    * @param {string} url
    * @param {Feed["feedId"]} feedId
-   * @returns {Promise}
    */
   checkNewPosts(url, feedId) {
     const existsPosts = app.getPosts().map((post) => ({ title: post.title, text: post.text }));
-    return loadRSS(url)
+    loadRSS(url)
       .then(
         (response) => getMarkupFromResponse(response),
       )
