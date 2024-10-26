@@ -50,7 +50,7 @@ function renderValidity(isValid, error) {
     renderValidInput();
     feedbackField.textContent = '';
   } else {
-    if (error === 'double') {
+    if (error === 'douvleURLEntered') {
       renderInvalidInput();
       renderTextDanger();
       feedbackField.textContent = i18next.t('errors.rssExists');
@@ -228,7 +228,7 @@ urlForm.addEventListener('submit', (event) => {
   onSubmitHandler(event);
 });
 
-document.addEventListener('validitySets', (/** @type CustomEvent */event) => {
+document.addEventListener('validitySetting', (/** @type CustomEvent */event) => {
   renderValidity(event.detail.isValid, event.detail.error);
 });
 
@@ -240,12 +240,12 @@ document.addEventListener('newRSSReceived', (/** @type CustomEvent */event) => {
 
 document.addEventListener('newPostReceived', renderNewPost);
 
-document.addEventListener('invalidRSS', renderInvalidRSS);
+document.addEventListener('invalidRSSReceived', renderInvalidRSS);
 
 document.addEventListener('networkError', renderNetworkError);
 
 document.addEventListener('linkClick', renderViewedLink);
 
-document.addEventListener('postDataSends', renderModal);
+document.addEventListener('postDataForModalSending', renderModal);
 
-document.addEventListener('buttonBlockSets', renderFormButtonBlocking);
+document.addEventListener('buttonBlockSetting', renderFormButtonBlocking);

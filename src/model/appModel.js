@@ -5,7 +5,8 @@ import loadRSS from '../service/network.js';
 import {
   getMarkupFromResponse, parseItems, parseFeed, createPost,
 } from './parseRSS.js';
-import { validateUrl, checkDoubles } from './validation.js';
+import { validateUrl, checkDoubles, validationErrors } from './validation.js';
+import events from './events.js';
 
 const app = {
   settings: {
@@ -48,7 +49,9 @@ const app = {
      */
     setValidity(isValid, error) {
       this.isValid = isValid;
-      document.dispatchEvent(new CustomEvent('validitySets', { detail: { isValid: this.isValid, error } }));
+      document.dispatchEvent(
+        new CustomEvent(events.form.validitySets, { detail: { isValid: this.isValid, error } }),
+      );
     },
 
     /**
@@ -57,7 +60,9 @@ const app = {
      */
     blockButton(isBlocked) {
       this.isButtonBlocked = isBlocked;
-      document.dispatchEvent(new CustomEvent('buttonBlockSets', { detail: { isBlocked: this.isButtonBlocked } }));
+      document.dispatchEvent(
+        new CustomEvent(events.form.buttonBlock, { detail: { isBlocked: this.isButtonBlocked } }),
+      );
     },
   },
 
@@ -107,7 +112,7 @@ const app = {
   addClickedLink(linkId) {
     if (!this.clickedLinks.includes(linkId)) {
       this.clickedLinks.unshift(linkId);
-      document.dispatchEvent(new CustomEvent('linkClick', { detail: { linkId } }));
+      document.dispatchEvent(new CustomEvent(events.newLinkAdded, { detail: { linkId } }));
     }
   },
 
@@ -121,7 +126,15 @@ const app = {
     this.feeds.unshift(feed);
     const items = parseItems(rssMarkup);
     items.forEach((item) => this.posts.unshift(createPost(item, feed.feedId)));
-    document.dispatchEvent(new CustomEvent('newRSSReceived', { detail: { feeds: this.getFeeds(), posts: this.getPosts(), clickedLinks: this.getClickedLinks() } }));
+    document.dispatchEvent(
+      new CustomEvent(events.newRSS, {
+        detail: {
+          feeds: this.getFeeds(),
+          posts: this.getPosts(),
+          clickedLinks: this.getClickedLinks(),
+        },
+      }),
+    );
   },
 
   /**
@@ -130,7 +143,7 @@ const app = {
    */
   addNewPost(post) {
     this.posts.unshift(post);
-    document.dispatchEvent(new CustomEvent('newPostReceived', { detail: { post } }));
+    document.dispatchEvent(new CustomEvent(events.newPost, { detail: { post } }));
   },
 
   /**
@@ -184,7 +197,7 @@ const app = {
       .then(
         (rssMarkup) => {
           if (rssMarkup.querySelector('parsererror')) {
-            document.dispatchEvent(new CustomEvent('invalidRSS'));
+            document.dispatchEvent(new CustomEvent(events.invalidRSS));
           } else {
             this.addNewRSS(rssMarkup, url);
           }
@@ -192,7 +205,7 @@ const app = {
       )
       .catch((err) => {
         console.log(err);
-        if (err.message === 'Network Error') document.dispatchEvent(new CustomEvent('networkError'));
+        if (err.message === 'Network Error') document.dispatchEvent(new CustomEvent(events.networkError));
       });
   },
 
@@ -205,7 +218,13 @@ const app = {
 export function processViewButtonClick(postId) {
   app.addClickedLink(postId);
   const post = app.getPost(postId);
-  document.dispatchEvent(new CustomEvent('postDataSends', { detail: { title: post.title, text: post.text, link: post.link } }));
+  document.dispatchEvent(new CustomEvent(events.postDataSending, {
+    detail: {
+      title: post.title,
+      text: post.text,
+      link: post.link,
+    },
+  }));
 }
 
 /**
@@ -217,7 +236,7 @@ export function processLinkClick(postId) {
 }
 
 /**
- * Проверяет новый URL и загружает, если он валиден
+ * Проверяет новый URL и, если он валиден, загружает RSS
  * @param {string} newUrl
  */
 export function processNewUrl(newUrl) {
@@ -228,13 +247,13 @@ export function processNewUrl(newUrl) {
       if (!checkDoubles(newUrl, app.feeds)) {
         app.requestRss(newUrl).then(() => app.form.blockButton(false));
       } else {
-        app.form.setValidity(false, 'double');
+        app.form.setValidity(false, validationErrors.double);
         app.form.blockButton(false);
       }
     },
     (err) => {
       console.log(err);
-      app.form.setValidity(false, 'invalidURL');
+      app.form.setValidity(false, validationErrors.invalidURL);
       app.form.blockButton(false);
     },
   );

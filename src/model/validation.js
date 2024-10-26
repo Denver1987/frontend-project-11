@@ -16,9 +16,11 @@ export function validateUrl(newUrl, scheme) {
  */
 export function checkDoubles(newUrl, existedFeeds) {
   const urls = existedFeeds.map((feed) => feed.url);
-  if (urls.includes(newUrl)) {
-    document.dispatchEvent(new CustomEvent('enteredDouble'));
-    return true;
-  }
+  if (urls.includes(newUrl)) return true;
   return false;
 }
+
+export const validationErrors = {
+  double: 'douvleURLEntered',
+  invalidURL: 'invalidURL',
+};
